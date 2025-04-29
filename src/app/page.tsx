@@ -4,13 +4,14 @@ import { getMetroMedellinAlerts, Disruption } from "@/services/metro-medellin";
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, AlertTriangle, Bus } from "lucide-react";
+import { Info, AlertTriangle, Bus, Train, CableCar } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Search } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button"; // Import Button component
+
 
 interface LinePreferenceProps {
   lineName: string;
@@ -227,6 +228,7 @@ export default function Home() {
   const [isOnline, setIsOnline] = useState<boolean>(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
+  const [activeSection, setActiveSection] = useState<'alerts' | 'lines' | 'routes'>('alerts'); // Track active section
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -242,10 +244,10 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <Card>
+    <div className="container mx-auto p-4 space-y-4 font-sans rounded-xl"> {/* Added font-sans and rounded-xl for general style */}
+      <Card className="shadow-md"> {/* Added shadow-md for card depth */}
         <CardHeader>
-          <CardTitle>Real-Time Alerts</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Real-Time Alerts</CardTitle>
         </CardHeader>
         <CardContent>
           {isOnline ? (
@@ -258,26 +260,46 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
-      <Card className="h-[600px]">
+      <Card className="h-full shadow-md">
         <CardHeader>
-          <CardTitle>Notification Preferences</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Notification Preferences</CardTitle>
         </CardHeader>
-        <CardContent className="h-full">
-          <Accordion type="single" collapsible>
-            <AccordionItem value="lines">
-              <AccordionTrigger>Line Notifications</AccordionTrigger>
-              <AccordionContent>
-                <LineNotificationPreferences />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="routes">
-              <AccordionTrigger>Route Notifications</AccordionTrigger>
-              <AccordionContent>
+        <CardContent className="flex flex-col space-y-4">
+          <div className="flex space-x-4 justify-around">
+            <Button
+              variant="outline"
+              className={`flex-1 ${activeSection === 'lines' ? 'bg-secondary/20' : ''}`}
+              onClick={() => setActiveSection('lines')}
+            >
+              <Train className="mr-2" /> Lines
+            </Button>
+            <Button
+              variant="outline"
+              className={`flex-1 ${activeSection === 'routes' ? 'bg-secondary/20' : ''}`}
+              onClick={() => setActiveSection('routes')}
+            >
+              <Bus className="mr-2" /> Routes
+            </Button>
+          </div>
+
+          {activeSection === 'lines' && (
+            <div className="p-4 rounded-md">
+              <h3 className="text-lg font-semibold mb-2">Line Notifications</h3>
+              <LineNotificationPreferences />
+            </div>
+          )}
+
+          {activeSection === 'routes' && (
+            <div className="flex flex-col h-[400px]">
+              <h3 className="text-lg font-semibold mb-2">Route Notifications</h3>
+              <div className="flex-1">
                 <DynamicMap />
+              </div>
+              <div className="flex-1">
                 <RouteNotificationPreferences />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
