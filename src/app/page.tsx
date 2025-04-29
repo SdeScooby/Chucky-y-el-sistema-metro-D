@@ -8,9 +8,43 @@ import { Info, AlertTriangle, Bus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import * as Leaflet from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { Search } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+interface LinePreferenceProps {
+  lineName: string;
+  lineColor: string;
+  defaultState: boolean;
+  onToggle: (newState: boolean) => void;
+}
+
+const LinePreference: React.FC<LinePreferenceProps> = ({
+  lineName,
+  lineColor,
+  defaultState,
+  onToggle,
+}) => {
+  const [isEnabled, setIsEnabled] = useState(defaultState);
+
+  const toggleSwitch = () => {
+    const newState = !isEnabled;
+    setIsEnabled(newState);
+    onToggle(newState);
+  };
+
+  return (
+    <div className="flex items-center justify-between py-2">
+      <div className="flex items-center space-x-3">
+        <span
+          className="inline-block h-6 w-6 rounded-full"
+          style={{ backgroundColor: lineColor }}
+        ></span>
+        <span>{lineName}</span>
+      </div>
+      <Switch id={`line-${lineName}`} checked={isEnabled} onCheckedChange={toggleSwitch} />
+    </div>
+  );
+};
 
 const LineNotificationPreferences = () => {
   const [metroA, setMetroA] = useState(true);
@@ -19,37 +53,38 @@ const LineNotificationPreferences = () => {
   const [metroCable, setMetroCable] = useState(true);
   const [busesIntegrados, setBusesIntegrados] = useState(true);
 
-  // Implement local storage or account sync for persisting preferences
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="metro-a">Metro A</Label>
-        <Switch id="metro-a" checked={metroA} onCheckedChange={setMetroA} />
-      </div>
-      <div className="flex items-center justify-between">
-        <Label htmlFor="metro-b">Metro B</Label>
-        <Switch id="metro-b" checked={metroB} onCheckedChange={setMetroB} />
-      </div>
-      <div className="flex items-center justify-between">
-        <Label htmlFor="tranvia">Tranvía</Label>
-        <Switch id="tranvia" checked={tranvia} onCheckedChange={setTranvia} />
-      </div>
-      <div className="flex items-center justify-between">
-        <Label htmlFor="metro-cable">Metro Cable</Label>
-        <Switch
-          id="metro-cable"
-          checked={metroCable}
-          onCheckedChange={setMetroCable}
-        />
-      </div>
-      <div className="flex items-center justify-between">
-        <Label htmlFor="buses-integrados">Buses Integrados</Label>
-        <Switch
-          id="buses-integrados"
-          checked={busesIntegrados}
-          onCheckedChange={setBusesIntegrados}
-        />
-      </div>
+    <div className="space-y-3">
+      <LinePreference
+        lineName="Metro A"
+        lineColor="#A4D16A" // Example green
+        defaultState={metroA}
+        onToggle={setMetroA}
+      />
+      <LinePreference
+        lineName="Metro B"
+        lineColor="#E57373" // Example red
+        defaultState={metroB}
+        onToggle={setMetroB}
+      />
+      <LinePreference
+        lineName="Tranvía"
+        lineColor="#F06292" // Example pink
+        defaultState={tranvia}
+        onToggle={setTranvia}
+      />
+      <LinePreference
+        lineName="Metro Cable"
+        lineColor="#64B5F6" // Example blue
+        defaultState={metroCable}
+        onToggle={setMetroCable}
+      />
+      <LinePreference
+        lineName="Buses Integrados"
+        lineColor="#FFB74D" // Example orange
+        defaultState={busesIntegrados}
+        onToggle={setBusesIntegrados}
+      />
     </div>
   );
 };
@@ -66,41 +101,14 @@ const MockBusRouteData: BusRoute[] = [
   { id: "C3-003M", name: "C3-003M Balcón ⇄ Manzanillo" },
 ];
 
+const DynamicMap = dynamic(() => import('@/components/DynamicMap'), {
+  ssr: false,
+});
+
 const DynamicRoutePreferences = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>(MockBusRouteData.map(route => route.id)); // Store selected route IDs, defaulting to all selected
   const [busRoutes, setBusRoutes] = useState<BusRoute[]>(MockBusRouteData);
-
-  const mapRef = useRef<Leaflet.Map | null>(null); // Use useRef to store the map instance
-
-  useEffect(() => {
-    const initializeMap = () => {
-      const newMap = Leaflet.map('map').setView([6.2442, -75.5812], 13); // Medellín coordinates
-
-      Leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      }).addTo(newMap);
-
-      // Add a marker (example)
-      Leaflet.marker([6.2442, -75.5812]).addTo(newMap)
-        .bindPopup('Medellín')
-        .openPopup();
-
-      mapRef.current = newMap;
-    };
-
-    if (!mapRef.current) {
-      initializeMap();
-    }
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
 
   const filteredRoutes = busRoutes.filter((route) =>
     route.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -115,7 +123,7 @@ const DynamicRoutePreferences = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Map */}
-      <div id="map" className="h-64 rounded-md shadow-md z-0"></div>
+      <DynamicMap />
       <div className="flex items-center space-x-2 mt-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
@@ -256,6 +264,7 @@ export default function Home() {
           <CardTitle>Notification Preferences</CardTitle>
         </CardHeader>
         <CardContent className="h-full">
+          <LineNotificationPreferences />
           <DynamicRoutePreferences />
         </CardContent>
       </Card>
