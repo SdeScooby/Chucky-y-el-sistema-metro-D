@@ -1,7 +1,7 @@
 "use client";
 
 import { getMetroMedellinAlerts, Disruption } from "@/services/metro-medellin";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, AlertTriangle, Bus, Train, CableCar } from "lucide-react";
@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Search } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { Button } from "@/components/ui/button"; // Import Button component
-
+import { Button } from "@/components/ui/button";
 
 interface LinePreferenceProps {
   lineName: string;
@@ -41,7 +40,7 @@ const LinePreference: React.FC<LinePreferenceProps> = ({
           className="inline-block h-6 w-6 rounded-full"
           style={{ backgroundColor: lineColor }}
         ></span>
-        <span>{lineName}</span>
+        <span className="font-medium">{lineName}</span>
       </div>
       <Switch id={`line-${lineName}`} checked={isEnabled} onCheckedChange={toggleSwitch} />
     </div>
@@ -59,31 +58,31 @@ const LineNotificationPreferences = () => {
     <div className="space-y-3">
       <LinePreference
         lineName="Metro A"
-        lineColor="#A4D16A" // Example green
+        lineColor="#A4D16A"
         defaultState={metroA}
         onToggle={setMetroA}
       />
       <LinePreference
         lineName="Metro B"
-        lineColor="#E57373" // Example red
+        lineColor="#E57373"
         defaultState={metroB}
         onToggle={setMetroB}
       />
       <LinePreference
         lineName="Tranvía"
-        lineColor="#F06292" // Example pink
+        lineColor="#F06292"
         defaultState={tranvia}
         onToggle={setTranvia}
       />
       <LinePreference
         lineName="Metro Cable"
-        lineColor="#64B5F6" // Example blue
+        lineColor="#64B5F6"
         defaultState={metroCable}
         onToggle={setMetroCable}
       />
       <LinePreference
         lineName="Buses Integrados"
-        lineColor="#FFB74D" // Example orange
+        lineColor="#FFB74D"
         defaultState={busesIntegrados}
         onToggle={setBusesIntegrados}
       />
@@ -109,7 +108,7 @@ const DynamicMap = dynamic(() => import('@/components/DynamicMap'), {
 
 const RouteNotificationPreferences = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRoutes, setSelectedRoutes] = useState<string[]>(MockBusRouteData.map(route => route.id)); // Store selected route IDs, defaulting to all selected
+  const [selectedRoutes, setSelectedRoutes] = useState<string[]>(MockBusRouteData.map(route => route.id));
   const [busRoutes, setBusRoutes] = useState<BusRoute[]>(MockBusRouteData);
 
   const filteredRoutes = busRoutes.filter((route) =>
@@ -142,7 +141,7 @@ const RouteNotificationPreferences = () => {
           >
             <div className="flex items-center space-x-2">
               <Bus className="h-5 w-5" />
-              <div>{route.name}</div>
+              <div className="font-medium">{route.name}</div>
             </div>
             <Switch
               id={`route-${route.id}`}
@@ -166,7 +165,6 @@ const RealTimeAlerts = () => {
         setAlerts(metroAlerts);
       } catch (error) {
         console.error("Failed to fetch alerts:", error);
-        // Display a default error message or fallback alerts
         setAlerts([
           {
             type: "Error",
@@ -180,9 +178,8 @@ const RealTimeAlerts = () => {
 
     fetchAlerts();
 
-    // Setup interval for real-time updates (e.g., every 60 seconds)
     const intervalId = setInterval(fetchAlerts, 60000);
-    return () => clearInterval(intervalId); // Clean up on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -191,7 +188,7 @@ const RealTimeAlerts = () => {
         alerts.map((alert, index) => (
           <Alert key={index} variant={alert.type === "Error" ? "destructive" : "default"}>
             <Info className="h-4 w-4" />
-            <AlertTitle>{alert.type} on {alert.affectedLines.join(', ')}</AlertTitle>
+            <AlertTitle className="font-semibold">{alert.type} on {alert.affectedLines.join(', ')}</AlertTitle>
             <AlertDescription>
               Estimated duration: {alert.estimatedDuration} minutes.{" "}
               Alternatives: {alert.alternatives.join(", ")}
@@ -201,7 +198,7 @@ const RealTimeAlerts = () => {
       ) : (
         <Alert>
           <Info className="h-4 w-4" />
-          <AlertTitle>No alerts at this time.</AlertTitle>
+          <AlertTitle className="font-semibold">No alerts at this time.</AlertTitle>
           <AlertDescription>
             The Metro de Medellin is operating normally.
           </AlertDescription>
@@ -215,7 +212,7 @@ const OfflineAlert = () => {
   return (
     <Alert variant="destructive">
       <AlertTriangle className="h-4 w-4" />
-      <AlertTitle>Offline Mode</AlertTitle>
+      <AlertTitle className="font-semibold">Offline Mode</AlertTitle>
       <AlertDescription>
         Currently displaying the last available information. This may be
         outdated. Please check your internet connection for real-time updates.
@@ -228,7 +225,7 @@ export default function Home() {
   const [isOnline, setIsOnline] = useState<boolean>(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
-  const [activeSection, setActiveSection] = useState<'alerts' | 'lines' | 'routes'>('alerts'); // Track active section
+  const [activeSection, setActiveSection] = useState<'alerts' | 'lines' | 'routes'>('alerts');
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -244,8 +241,8 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="container mx-auto p-4 space-y-4 font-sans rounded-xl"> {/* Added font-sans and rounded-xl for general style */}
-      <Card className="shadow-md"> {/* Added shadow-md for card depth */}
+    <div className="container mx-auto p-4 space-y-4 font-sans rounded-xl">
+      <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="text-2xl font-semibold">Real-Time Alerts</CardTitle>
         </CardHeader>
@@ -255,7 +252,7 @@ export default function Home() {
           ) : (
             <>
               <OfflineAlert />
-              <RealTimeAlerts /> {/* Display last available info */}
+              <RealTimeAlerts />
             </>
           )}
         </CardContent>
