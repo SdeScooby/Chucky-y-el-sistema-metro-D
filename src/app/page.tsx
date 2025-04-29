@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Search } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface LinePreferenceProps {
   lineName: string;
@@ -105,7 +106,7 @@ const DynamicMap = dynamic(() => import('@/components/DynamicMap'), {
   ssr: false,
 });
 
-const DynamicRoutePreferences = () => {
+const RouteNotificationPreferences = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>(MockBusRouteData.map(route => route.id)); // Store selected route IDs, defaulting to all selected
   const [busRoutes, setBusRoutes] = useState<BusRoute[]>(MockBusRouteData);
@@ -122,8 +123,6 @@ const DynamicRoutePreferences = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Map */}
-      <DynamicMap />
       <div className="flex items-center space-x-2 mt-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
@@ -264,8 +263,21 @@ export default function Home() {
           <CardTitle>Notification Preferences</CardTitle>
         </CardHeader>
         <CardContent className="h-full">
-          <LineNotificationPreferences />
-          <DynamicRoutePreferences />
+          <Accordion type="single" collapsible>
+            <AccordionItem value="lines">
+              <AccordionTrigger>Line Notifications</AccordionTrigger>
+              <AccordionContent>
+                <LineNotificationPreferences />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="routes">
+              <AccordionTrigger>Route Notifications</AccordionTrigger>
+              <AccordionContent>
+                <DynamicMap />
+                <RouteNotificationPreferences />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>
