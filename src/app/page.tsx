@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface LinePreferenceProps {
   lineName: string;
@@ -133,7 +134,7 @@ const RouteNotificationPreferences = () => {
           className="flex-1"
         />
       </div>
-      <div className="overflow-y-auto mt-2 h-full">
+      <ScrollArea className="overflow-y-auto mt-2 h-full">
         {filteredRoutes.map((route) => (
           <div
             key={route.id}
@@ -150,7 +151,7 @@ const RouteNotificationPreferences = () => {
             />
           </div>
         ))}
-      </div>
+      </ScrollArea>
     </div>
   );
 };
@@ -287,12 +288,12 @@ export default function Home() {
           )}
 
           {activeSection === 'routes' && (
-            <div className="flex flex-col h-[400px]">
+            <div className="flex flex-col h-[500px]">
               <h3 className="text-lg font-semibold mb-2">Route Notifications</h3>
-              <div className="flex-1">
+              <div className="h-48 relative rounded-md overflow-hidden">
                 <DynamicMap />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 mt-2">
                 <RouteNotificationPreferences />
               </div>
             </div>
@@ -302,3 +303,4 @@ export default function Home() {
     </div>
   );
 }
+
