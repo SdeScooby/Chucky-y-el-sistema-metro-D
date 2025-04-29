@@ -12,6 +12,8 @@ import { Search } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTheme } from 'next-themes';
+import { Moon, Sun, HelpCircle, ArrowLeft } from 'lucide-react';
 
 interface LinePreferenceProps {
   lineName: string;
@@ -227,6 +229,7 @@ export default function Home() {
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
   const [activeSection, setActiveSection] = useState<'alerts' | 'lines' | 'routes'>('alerts');
+   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -242,65 +245,84 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="container mx-auto p-4 space-y-4 font-sans rounded-xl">
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Real-Time Alerts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isOnline ? (
-            <RealTimeAlerts />
-          ) : (
-            <>
-              <OfflineAlert />
+    <div className="flex h-screen bg-background font-sans antialiased">
+      {/* Sidebar */}
+      <div className="w-16 p-4 flex flex-col items-center space-y-4 bg-secondary rounded-xl shadow-md">
+        <Button variant="ghost" size="icon">
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <Button variant="ghost" size="icon">
+          <HelpCircle className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        >
+          {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        </Button>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-4 space-y-4 rounded-xl">
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold">Real-Time Alerts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isOnline ? (
               <RealTimeAlerts />
-            </>
-          )}
-        </CardContent>
-      </Card>
-      <Card className="h-full shadow-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Notification Preferences</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col space-y-4">
-          <div className="flex space-x-4 justify-around">
-            <Button
-              variant="outline"
-              className={`flex-1 ${activeSection === 'lines' ? 'bg-secondary/20' : ''}`}
-              onClick={() => setActiveSection('lines')}
-            >
-              <Train className="mr-2" /> Lines
-            </Button>
-            <Button
-              variant="outline"
-              className={`flex-1 ${activeSection === 'routes' ? 'bg-secondary/20' : ''}`}
-              onClick={() => setActiveSection('routes')}
-            >
-              <Bus className="mr-2" /> Routes
-            </Button>
-          </div>
-
-          {activeSection === 'lines' && (
-            <div className="p-4 rounded-md">
-              <h3 className="text-lg font-semibold mb-2">Line Notifications</h3>
-              <LineNotificationPreferences />
+            ) : (
+              <>
+                <OfflineAlert />
+                <RealTimeAlerts />
+              </>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="h-full shadow-md">
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold">Notification Preferences</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col space-y-4">
+            <div className="flex space-x-4 justify-around">
+              <Button
+                variant="outline"
+                className={`flex-1 ${activeSection === 'lines' ? 'bg-secondary/20' : ''}`}
+                onClick={() => setActiveSection('lines')}
+              >
+                <Train className="mr-2" /> Lines
+              </Button>
+              <Button
+                variant="outline"
+                className={`flex-1 ${activeSection === 'routes' ? 'bg-secondary/20' : ''}`}
+                onClick={() => setActiveSection('routes')}
+              >
+                <Bus className="mr-2" /> Routes
+              </Button>
             </div>
-          )}
 
-          {activeSection === 'routes' && (
-            <div className="flex flex-col h-[500px]">
-              <h3 className="text-lg font-semibold mb-2">Route Notifications</h3>
-              <div className="h-48 relative rounded-md overflow-hidden">
-                <DynamicMap />
+            {activeSection === 'lines' && (
+              <div className="p-4 rounded-md">
+                <h3 className="text-lg font-semibold mb-2">Line Notifications</h3>
+                <LineNotificationPreferences />
               </div>
-              <div className="flex-1 mt-2">
-                <RouteNotificationPreferences />
+            )}
+
+            {activeSection === 'routes' && (
+              <div className="flex flex-col h-[500px]">
+                <h3 className="text-lg font-semibold mb-2">Route Notifications</h3>
+                <div className="h-48 relative rounded-md overflow-hidden">
+                  <DynamicMap />
+                </div>
+                <div className="flex-1 mt-2">
+                  <RouteNotificationPreferences />
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
-
