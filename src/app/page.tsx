@@ -1,19 +1,17 @@
+
 "use client";
 
 import { getMetroMedellinAlerts, Disruption } from "@/services/metro-medellin";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, AlertTriangle, Bus, Train, CableCar } from "lucide-react";
+import { Info, AlertTriangle, Bus, Train, CableCar, Search, Moon, Sun, HelpCircle, ArrowLeft } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Search } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTheme } from 'next-themes';
-import { Moon, Sun, HelpCircle, ArrowLeft } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -21,84 +19,133 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { SidebarProvider, Sidebar, SidebarContent, SidebarTrigger, SidebarFooter, SidebarHeader, SidebarMenuItem, SidebarMenu, SidebarMenuButton } from "@/components/ui/sidebar"; // Added Sidebar imports
 
-interface LinePreferenceProps {
-  lineName: string;
-  lineColor: string;
-  defaultState: boolean;
-  onToggle: (newState: boolean) => void;
+interface Station {
+  id: string;
+  name: string;
 }
 
-const LinePreference: React.FC<LinePreferenceProps> = ({
-  lineName,
-  lineColor,
-  defaultState,
-  onToggle,
-}) => {
-  const [isEnabled, setIsEnabled] = useState(defaultState);
+const metroAStations: Station[] = [
+  { id: "NQI", name: "Niquía" }, { id: "BEL", name: "Bello" }, { id: "MDX", name: "Madera" }, { id: "ACE", name: "Acevedo" },
+  { id: "TRI", name: "Tricentenario" }, { id: "CAR", name: "Caribe" }, { id: "UNI", name: "Universidad" }, { id: "HOS", name: "Hospital" },
+  { id: "PRA", name: "Prado" }, { id: "PBE", name: "Parque Berrío" }, { id: "SAN", name: "San Antonio" }, { id: "ALP", name: "Alpujarra" },
+  { id: "EXP", name: "Exposiciones" }, { id: "IND", name: "Industriales" }, { id: "POB", name: "Poblado" }, { id: "AGU", name: "Aguacatala" },
+  { id: "AYU", name: "Ayurá" }, { id: "ENV", name: "Envigado" }, { id: "ITA", name: "Itagüí" }, { id: "SAB", name: "Sabaneta" }, { id: "LES", name: "La Estrella" },
+];
 
-  const toggleSwitch = () => {
-    const newState = !isEnabled;
-    setIsEnabled(newState);
-    onToggle(newState);
-  };
+const metroBStations: Station[] = [
+  { id: "SAN_B", name: "San Antonio" }, { id: "CIS_B", name: "Cisneros" }, { id: "SUR_B", name: "Suramericana" }, { id: "EST_B", name: "Estadio" },
+  { id: "FLO_B", name: "Floresta" }, { id: "SLU_B", name: "Santa Lucía" }, { id: "SJA_B", name: "San Javier" },
+];
 
-  return (
-    <div className="flex items-center justify-between py-2">
-      <div className="flex items-center space-x-3">
-        <span
-          className="inline-block h-6 w-6 rounded-full"
-          style={{ backgroundColor: lineColor }}
-        ></span>
-        <span className="font-medium">{lineName}</span>
-      </div>
-      <Switch id={`line-${lineName}`} checked={isEnabled} onCheckedChange={toggleSwitch} />
-    </div>
-  );
-};
+const tranviaStations: Station[] = [
+  { id: "SAN_T", name: "San Antonio" }, { id: "SJO_T", name: "San José" }, { id: "PAG_T", name: "Pabellón del Agua EPM" }, { id: "BIC_T", name: "Bicentenario" },
+  { id: "BUE_T", name: "Buenos Aires" }, { id: "MIR_T", name: "Miraflores" }, { id: "LOY_T", name: "Loyola" }, { id: "AEC_T", name: "Alejandro Echavarría" }, { id: "ORI_T", name: "Oriente" },
+];
+
+const metroCableKStations: Station[] = [
+  { id: "ACE_K", name: "Acevedo" }, { id: "AND_K", name: "Andalucía" }, { id: "PCS_K", name: "Popular" }, { id: "SDO_K", name: "Santo Domingo Savio" },
+];
+
 
 const LineNotificationPreferences = () => {
   const [metroA, setMetroA] = useState(true);
   const [metroB, setMetroB] = useState(true);
   const [tranvia, setTranvia] = useState(true);
-  const [metroCable, setMetroCable] = useState(true);
+  const [metroCable, setMetroCable] = useState(true); // Generic Metro Cable toggle
   const [busesIntegrados, setBusesIntegrados] = useState(true);
+  const [selectedLineForStations, setSelectedLineForStations] = useState<string | null>(null);
+
+  const lineData: Record<string, { name: string; color: string; stations: Station[]; state: boolean; setStateFunction: (val: boolean) => void; icon: React.ElementType }> = {
+    'Metro A': { name: 'Metro A', color: '#A4D16A', stations: metroAStations, state: metroA, setStateFunction: setMetroA, icon: Train },
+    'Metro B': { name: 'Metro B', color: '#E57373', stations: metroBStations, state: metroB, setStateFunction: setMetroB, icon: Train },
+    'Tranvía': { name: 'Tranvía', color: '#F06292', stations: tranviaStations, state: tranvia, setStateFunction: setTranvia, icon: Train }, // Using Train icon as a placeholder
+    'Metro Cable (Línea K)': { name: 'Metro Cable (Línea K)', color: '#64B5F6', stations: metroCableKStations, state: metroCable, setStateFunction: setMetroCable, icon: CableCar },
+    'Buses Integrados': { name: 'Buses Integrados', color: '#FFB74D', stations: [], state: busesIntegrados, setStateFunction: setBusesIntegrados, icon: Bus },
+  };
+
+  const handleLineSelect = (lineKey: string) => {
+    setSelectedLineForStations(lineKey === selectedLineForStations ? null : lineKey); // Toggle display
+  };
 
   return (
-    <div className="space-y-3">
-      <LinePreference
-        lineName="Metro A"
-        lineColor="#A4D16A"
-        defaultState={metroA}
-        onToggle={setMetroA}
-      />
-      <LinePreference
-        lineName="Metro B"
-        lineColor="#E57373"
-        defaultState={metroB}
-        onToggle={setMetroB}
-      />
-      <LinePreference
-        lineName="Tranvía"
-        lineColor="#F06292"
-        defaultState={tranvia}
-        onToggle={setTranvia}
-      />
-      <LinePreference
-        lineName="Metro Cable"
-        lineColor="#64B5F6"
-        defaultState={metroCable}
-        onToggle={setMetroCable}
-      />
-      <LinePreference
-        lineName="Buses Integrados"
-        lineColor="#FFB74D"
-        defaultState={busesIntegrados}
-        onToggle={setBusesIntegrados}
-      />
+    <div className="space-y-4">
+      <Accordion type="multiple" className="w-full" defaultValue={['main-metro', 'other-lines']}>
+        <AccordionItem value="main-metro">
+          <AccordionTrigger>
+            <div className="flex items-center space-x-2">
+              <Train className="h-5 w-5" />
+              <span>Main Metro Lines</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            {Object.entries(lineData)
+              .filter(([key]) => key === 'Metro A' || key === 'Metro B')
+              .map(([key, { name, color, state, setStateFunction, icon: IconComponent }]) => (
+                <div key={key} className="flex items-center justify-between py-3 px-1 border-b last:border-b-0">
+                  <div className="flex items-center space-x-3">
+                    <span className="inline-block h-5 w-5 rounded-full" style={{ backgroundColor: color }}></span>
+                    <Button variant="link" className="p-0 h-auto text-base" onClick={() => handleLineSelect(key)}>
+                      {name}
+                    </Button>
+                  </div>
+                  <Switch checked={state} onCheckedChange={setStateFunction} />
+                </div>
+              ))}
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="other-lines">
+          <AccordionTrigger>
+            <div className="flex items-center space-x-2">
+              <CableCar className="h-5 w-5" /> {/* Or a generic icon */}
+              <span>Other Lines & Services</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            {Object.entries(lineData)
+              .filter(([key]) => key !== 'Metro A' && key !== 'Metro B')
+              .map(([key, { name, color, state, setStateFunction, icon: IconComponent }]) => (
+                <div key={key} className="flex items-center justify-between py-3 px-1 border-b last:border-b-0">
+                  <div className="flex items-center space-x-3">
+                    <span className="inline-block h-5 w-5 rounded-full" style={{ backgroundColor: color }}></span>
+                    <Button variant="link" className="p-0 h-auto text-base" onClick={() => handleLineSelect(key)}>
+                      {name}
+                    </Button>
+                  </div>
+                  <Switch checked={state} onCheckedChange={setStateFunction} />
+                </div>
+              ))}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      {selectedLineForStations && lineData[selectedLineForStations] && (
+        <Card className="mt-6 shadow-md">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Stations for {selectedLineForStations}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {lineData[selectedLineForStations].stations.length > 0 ? (
+              <ScrollArea className="h-48 border rounded-md p-2">
+                <ul className="space-y-2">
+                  {lineData[selectedLineForStations].stations.map(station => (
+                    <li key={station.id} className="p-2 rounded-md hover:bg-muted text-sm">
+                      {station.name}
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            ) : (
+              <p className="text-muted-foreground">Station information is not applicable or available for this selection.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
+
 
 interface BusRoute {
   id: string;
@@ -109,104 +156,17 @@ const MockBusRouteData: BusRoute[] = [
   { id: "C3-001", name: "C3-001 Santa Gema ⇄ Aguacatala" },
   { id: "C3-001A", name: "C3-001A Las Cabras ⇄ Aguacatala" },
   { id: "C3-002", name: "C3-002 Aguacatala ⇄ Bolivariana" },
-  { id: "C3-003M", name: "C3-003M Balcón ⇄ Manzanillo" },
-  { id: "C3-004", name: "C3-004 Circular বর্ষাকালে" },
-  { id: "C3-005", name: "C3-005 Circular বর্ষাকালে" },
-    { id: "C3-006", name: "C3-006 Circular বর্ষাকালে" },
-    { id: "C3-007", name: "C3-007 Circular বর্ষাকালে" },
-    { id: "C3-008", name: "C3-008 Circular বর্ষাকালে" },
-    { id: "C3-009", name: "C3-009 Circular বর্ষাকালে" },
-    { id: "C3-010", name: "C3-010 Circular বর্ষাকালে" },
-    { id: "C3-011", name: "C3-011 Circular বর্ষাকালে" },
-    { id: "C3-012", name: "C3-012 Circular বর্ষাকালে" },
-    { id: "C3-013", name: "C3-013 Circular বর্ষাকালে" },
-    { id: "C3-014", name: "C3-014 Circular বর্ষাকালে" },
-    { id: "C3-015", name: "C3-015 Circular বর্ষাকালে" },
-    { id: "C3-016", name: "C3-016 Circular বর্ষাকালে" },
-    { id: "C3-017", name: "C3-017 Circular বর্ষাকালে" },
-    { id: "C3-018", name: "C3-018 Circular বর্ষাকালে" },
-    { id: "C3-019", name: "C3-019 Circular বর্ষাকালে" },
-    { id: "C3-020", name: "C3-020 Circular বর্ষাকালে" },
-    { id: "C3-021", name: "C3-021 Circular বর্ষাকালে" },
-    { id: "C3-022", name: "C3-022 Circular বর্ষাকালে" },
-    { id: "C3-023", name: "C3-023 Circular বর্ষাকালে" },
-    { id: "C3-024", name: "C3-024 Circular বর্ষাকালে" },
-    { id: "C3-025", name: "C3-025 Circular বর্ষাকালে" },
-    { id: "C3-026", name: "C3-026 Circular বর্ষাকালে" },
-    { id: "C3-027", name: "C3-027 Circular বর্ষাকালে" },
-    { id: "C3-028", name: "C3-028 Circular বর্ষাকালে" },
-    { id: "C3-029", name: "C3-029 Circular বর্ষাকালে" },
-    { id: "C3-030", name: "C3-030 Circular বর্ষাকালে" },
-    { id: "C3-031", name: "C3-031 Circular বর্ষাকালে" },
-    { id: "C3-032", name: "C3-032 Circular বর্ষাকালে" },
-    { id: "C3-033", name: "C3-033 Circular বর্ষাকালে" },
-    { id: "C3-034", name: "C3-034 Circular বর্ষাকালে" },
-    { id: "C3-035", name: "C3-035 Circular বর্ষাকালে" },
-    { id: "C3-036", name: "C3-036 Circular বর্ষাকালে" },
-    { id: "C3-037", name: "C3-037 Circular বর্ষাকালে" },
-    { id: "C3-038", name: "C3-038 Circular বর্ষাকালে" },
-    { id: "C3-039", name: "C3-039 Circular বর্ষাকালে" },
-    { id: "C3-040", name: "C3-040 Circular বর্ষাকালে" },
-    { id: "C3-041", name: "C3-041 Circular বর্ষাকালে" },
-    { id: "C3-042", name: "C3-042 Circular বর্ষাকালে" },
-    { id: "C3-043", name: "C3-043 Circular বর্ষাকালে" },
-    { id: "C3-044", name: "C3-044 Circular বর্ষাকালে" },
-    { id: "C3-045", name: "C3-045 Circular বর্ষাকালে" },
-    { id: "C3-046", name: "C3-046 Circular বর্ষাকালে" },
-    { id: "C3-047", name: "C3-047 Circular বর্ষাকালে" },
-    { id: "C3-048", name: "C3-048 Circular বর্ষাকালে" },
-    { id: "C3-049", name: "C3-049 Circular বর্ষাকালে" },
-    { id: "C3-050", name: "C3-050 Circular বর্ষাকালে" },
-    { id: "C3-051", name: "C3-051 Circular বর্ষাকালে" },
-    { id: "C3-052", name: "C3-052 Circular বর্ষাকালে" },
-    { id: "C3-053", name: "C3-053 Circular বর্ষাকালে" },
-    { id: "C3-054", name: "C3-054 Circular বর্ষাকালে" },
-    { id: "C3-055", name: "C3-055 Circular বর্ষাকালে" },
-    { id: "C3-056", name: "C3-056 Circular বর্ষাকালে" },
-    { id: "C3-057", name: "C3-057 Circular বর্ষাকালে" },
-    { id: "C3-058", name: "C3-058 Circular বর্ষাকালে" },
-    { id: "C3-059", name: "C3-059 Circular বর্ষাকালে" },
-    { id: "C3-060", name: "C3-060 Circular বর্ষাকালে" },
-    { id: "C3-061", name: "C3-061 Circular বর্ষাকালে" },
-    { id: "C3-062", name: "C3-062 Circular বর্ষাকালে" },
-    { id: "C3-063", name: "C3-063 Circular বর্ষাকালে" },
-    { id: "C3-064", name: "C3-064 Circular বর্ষাকালে" },
-    { id: "C3-065", name: "C3-065 Circular বর্ষাকালে" },
-    { id: "C3-066", name: "C3-066 Circular বর্ষাকালে" },
-    { id: "C3-067", name: "C3-067 Circular বর্ষাকালে" },
-    { id: "C3-068", name: "C3-068 Circular বর্ষাকালে" },
-    { id: "C3-069", name: "C3-069 Circular বর্ষাকালে" },
-    { id: "C3-070", name: "C3-070 Circular বর্ষাকালে" },
-    { id: "C3-071", name: "C3-071 Circular বর্ষাকালে" },
-    { id: "C3-072", name: "C3-072 Circular বর্ষাকালে" },
-    { id: "C3-073", name: "C3-073 Circular বর্ষাকালে" },
-    { id: "C3-074", name: "C3-074 Circular বর্ষাকালে" },
-    { id: "C3-075", name: "C3-075 Circular বর্ষাকালে" },
-    { id: "C3-076", name: "C3-076 Circular বর্ষাকালে" },
-    { id: "C3-077", name: "C3-077 Circular বর্ষাকালে" },
-    { id: "C3-078", name: "C3-078 Circular বর্ষাকালে" },
-    { id: "C3-079", name: "C3-079 Circular বর্ষাকালে" },
-    { id: "C3-080", name: "C3-080 Circular বর্ষাকালে" },
-    { id: "C3-081", name: "C3-081 Circular বর্ষাকালে" },
-    { id: "C3-082", name: "C3-082 Circular বর্ষাকালে" },
-    { id: "C3-083", name: "C3-083 Circular বর্ষাকালে" },
-    { id: "C3-084", name: "C3-084 Circular বর্ষাকালে" },
-    { id: "C3-085", name: "C3-085 Circular বর্ষাকালে" },
-    { id: "C3-086", name: "C3-086 Circular বর্ষাকালে" },
-    { id: "C3-087", name: "C3-087 Circular বর্ষাকালে" },
-    { id: "C3-088", name: "C3-088 Circular বর্ষাকালে" },
-    { id: "C3-089", name: "C3-089 Circular বর্ষাকালে" },
-    { id: "C3-090", name: "C3-090 Circular বর্ষাকালে" },
-    { id: "C3-091", name: "C3-091 Circular বর্ষাকালে" },
-    { id: "C3-092", name: "C3-092 Circular বর্ষাকালে" },
-    { id: "C3-093", name: "C3-093 Circular বর্ষাকালে" },
-    { id: "C3-094", name: "C3-094 Circular বর্ষাকালে" },
-    { id: "C3-095", name: "C3-095 Circular বর্ষাকালে" },
-    { id: "C3-096", name: "C3-096 Circular বর্ষাকালে" },
-    { id: "C3-097", name: "C3-097 Circular বর্ষাকালে" },
-    { id: "C3-098", name: "C3-098 Circular বর্ষাকালে" },
-    { id: "C3-099", name: "C3-099 Circular বর্ষাকালে" },
-    { id: "C3-100", name: "C3-100 Circular বর্ষাকালে" },
+  // Keeping a small sample for brevity
+  { id: "C6-001", name: "C6-001 Circular Coonatra" },
+  { id: "O", name: "O (Circular)" },
+  { id: "130", name: "130 La América" },
+  { id: "133", name: "133 Laureles" },
+  { id: "250", name: "250 Belén" },
+  { id: "300", name: "300 Robledo" },
+  { id: "301", name: "301 Castilla" },
+  { id: "304", name: "304 Manrique" },
+  { id: "305", name: "305 Aranjuez" },
+  { id: "C23", name: "C23 Circular Boston" },
 ];
 
 const DynamicMap = dynamic(() => import('@/components/DynamicMap'), {
@@ -225,7 +185,6 @@ const RouteList: React.FC<RouteListProps> = ({ pageNumber }) => {
   
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedRoutes, setSelectedRoutes] = useState<string[]>(MockBusRouteData.map(route => route.id));
-    const [busRoutes, setBusRoutes] = useState<BusRoute[]>(MockBusRouteData);
 
     const filteredRoutes = routes.filter((route) =>
         route.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -243,13 +202,13 @@ const RouteList: React.FC<RouteListProps> = ({ pageNumber }) => {
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Alimentador"
+                    placeholder="Search feeder route..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1"
                 />
             </div>
-            <ScrollArea className="overflow-y-auto mt-2 h-full">
+            <ScrollArea className="overflow-y-auto mt-2 flex-grow"> {/* Changed h-full to flex-grow */}
                 {filteredRoutes.map((route) => (
                     <div
                         key={route.id}
@@ -257,7 +216,7 @@ const RouteList: React.FC<RouteListProps> = ({ pageNumber }) => {
                     >
                         <div className="flex items-center space-x-2">
                             <Bus className="h-5 w-5" />
-                            <div className="font-medium">{route.name}</div>
+                            <div className="font-medium text-sm">{route.name}</div>
                         </div>
                         <Switch
                             id={`route-${route.id}`}
@@ -302,7 +261,7 @@ const RealTimeAlerts = () => {
     <div className="space-y-4">
       {alerts.length > 0 ? (
         alerts.map((alert, index) => (
-          <Alert key={index} variant={alert.type === "Error" ? "destructive" : "default"}>
+          <Alert key={index} variant={alert.type === "Error" ? "destructive" : "default"} className="shadow-sm">
             <Info className="h-4 w-4" />
             <AlertTitle className="font-semibold">{alert.type} on {alert.affectedLines.join(', ')}</AlertTitle>
             <AlertDescription>
@@ -312,7 +271,7 @@ const RealTimeAlerts = () => {
           </Alert>
         ))
       ) : (
-        <Alert>
+        <Alert className="shadow-sm">
           <Info className="h-4 w-4" />
           <AlertTitle className="font-semibold">No alerts at this time.</AlertTitle>
           <AlertDescription>
@@ -326,7 +285,7 @@ const RealTimeAlerts = () => {
 
 const OfflineAlert = () => {
   return (
-    <Alert variant="destructive">
+    <Alert variant="destructive" className="shadow-sm">
       <AlertTriangle className="h-4 w-4" />
       <AlertTitle className="font-semibold">Offline Mode</AlertTitle>
       <AlertDescription>
@@ -338,158 +297,136 @@ const OfflineAlert = () => {
 };
 
 export default function Home() {
-  const [isOnline, setIsOnline] = useState<boolean>(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
-  );
-  const [activeSection, setActiveSection] = useState<'alerts' | 'lines' | 'routes'>('alerts');
+  const [isOnline, setIsOnline] = useState<boolean>(true);
   const { theme, setTheme } = useTheme();
   const [showRoutes, setShowRoutes] = useState(false);
   const [routePage, setRoutePage] = useState(1);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
 
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
+      return () => {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      };
+    }
   }, []);
+  
 
-  const toggleRoutes = () => {
-    setShowRoutes(!showRoutes);
+  const toggleRoutesView = () => {
+    setShowRoutes(prev => !prev);
   };
 
-  const renderRoutes = (pageNumber: number) => {
-      setRoutePage(pageNumber);
-  };
+  const totalRoutePages = Math.ceil(MockBusRouteData.length / 20);
 
   return (
-    <div className="flex h-screen bg-background font-sans antialiased">
-      {/* Sidebar */}
-      <div className="w-16 p-2 flex flex-col items-center space-y-3 bg-secondary rounded-xl shadow-md h-full">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => setShowRoutes(false)}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" align="center">
-              Go Back
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={toggleRoutes}>
-                  <Bus className="h-5 w-5" />
+    <SidebarProvider>
+      <div className="flex h-screen bg-background font-sans antialiased">
+        {/* Sidebar */}
+        <Sidebar className="bg-card border-r">
+            <SidebarHeader>
+                 <Button variant="ghost" size="icon" onClick={() => setShowRoutes(false)} className="mb-2">
+                    <ArrowLeft className="h-5 w-5" />
+                    <span className="sr-only">Go Back</span>
                 </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" align="center">
-              Routes
-            </TooltipContent>
-          </Tooltip>
-          <div className="flex-grow" />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <HelpCircle className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" align="center">
-              Help
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" align="center">
-              Toggle Theme
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+            </SidebarHeader>
+            <SidebarContent className="flex-grow">
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                         <SidebarMenuButton onClick={toggleRoutesView} tooltip="Bus Routes">
+                            <Bus className="h-5 w-5" />
+                            <span>Bus Routes</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                         <SidebarMenuButton tooltip="Help">
+                             <HelpCircle className="h-5 w-5" />
+                             <span>Help</span>
+                         </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                            tooltip="Toggle Theme"
+                        >
+                            {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                            <span>Toggle Theme</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarFooter>
+        </Sidebar>
 
-      {/* Main Content */}
-      <div className="flex-1 p-4 space-y-4 rounded-xl">
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold">Real-Time Alerts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isOnline ? (
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 lg:p-6 space-y-4 overflow-y-auto">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Metro Medellín Status</h1>
+            <SidebarTrigger className="md:hidden" />
+          </div>
+
+          <Card className="shadow-lg rounded-xl">
+            <CardHeader>
+              <CardTitle className="text-2xl font-semibold">Real-Time Alerts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!isOnline && <OfflineAlert />}
               <RealTimeAlerts />
-            ) : (
-              <>
-                <OfflineAlert />
-                <RealTimeAlerts />
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {showRoutes ? (
-          <Card className="h-full shadow-md">
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold">Route Notifications</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col space-y-4">
-              <div className="h-48 relative rounded-md overflow-hidden">
-                <DynamicMap />
-              </div>
-              <div className="flex-1 mt-2">
-                <RouteList pageNumber={routePage} />
-              </div>
-              <div className="flex justify-center space-x-2">
-                {[...Array(Math.ceil(MockBusRouteData.length / 20))].map((_, index) => (
-                    <Button
-                        key={index}
-                        variant="outline"
-                        className={routePage === index + 1 ? "bg-secondary/20" : ""}
-                        onClick={() => renderRoutes(index + 1)}
-                    >
-                        {index + 1}
-                    </Button>
-                ))}
-            </div>
             </CardContent>
           </Card>
-        ) : (
-          <Card className="h-full shadow-md">
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold">Notification Preferences</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col space-y-4">
-              <div className="flex space-x-4 justify-around">
-                <Button
-                  variant="outline"
-                  className={`flex-1 ${activeSection === 'lines' ? 'bg-secondary/20' : ''}`}
-                  onClick={() => setActiveSection('lines')}
-                >
-                  <Train className="mr-2" /> Lines
-                </Button>
-              </div>
 
-              {activeSection === 'lines' && (
-                <div className="p-4 rounded-md">
-                  <h3 className="text-lg font-semibold mb-2">Line Notifications</h3>
-                  <LineNotificationPreferences />
+          {showRoutes ? (
+            <Card className="shadow-lg rounded-xl flex flex-col" style={{minHeight: 'calc(100vh - 20rem)'}}> {/* Adjusted height */}
+              <CardHeader>
+                <CardTitle className="text-2xl font-semibold">Feeder Route Notifications</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col space-y-4 flex-grow">
+                <div className="h-64 relative rounded-lg overflow-hidden shadow-md border">
+                  <DynamicMap />
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                <div className="flex-grow mt-2 min-h-[200px]"> {/* Ensure RouteList has space */}
+                  <RouteList pageNumber={routePage} />
+                </div>
+                {totalRoutePages > 1 && (
+                    <div className="flex justify-center space-x-2 pt-2">
+                    {[...Array(totalRoutePages)].map((_, index) => (
+                        <Button
+                            key={index}
+                            variant={routePage === index + 1 ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setRoutePage(index + 1)}
+                        >
+                            {index + 1}
+                        </Button>
+                    ))}
+                    </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="shadow-lg rounded-xl">
+              <CardHeader>
+                <CardTitle className="text-2xl font-semibold">Notification Preferences</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <LineNotificationPreferences />
+              </CardContent>
+            </Card>
+          )}
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
+
+    
