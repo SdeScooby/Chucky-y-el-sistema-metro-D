@@ -3,77 +3,77 @@
 @tailwind utilities;
 
 body {
-  font-family: "Segoe UI Black", Arial, Helvetica, sans-serif;
+  /* font-family removed to allow Geist from layout.tsx to apply */
 }
 
 @layer base {
   :root {
-    --background: 0 0% 96.1%; /* Light gray background */
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --background: 0 0% 96.1%; /* Light gray background - PRD */
+    --foreground: 0 0% 3.9%; /* Dark text - PRD */
+    --card: 0 0% 100%; /* White card */
+    --card-foreground: 0 0% 3.9%; /* Dark text on card */
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 141 71% 48%; /* Metro de Medellin green */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 143 53% 39%; /* Darker green details */
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 96.1%;
+    --primary: 141 71% 48%; /* Metro de Medellin green - PRD */
+    --primary-foreground: 0 0% 98%; /* Light text on primary */
+    --secondary: 143 53% 39%; /* Darker green details - PRD */
+    --secondary-foreground: 0 0% 98%; /* Light text on secondary */
+    --muted: 0 0% 90%; /* Lighter gray for muted */
     --muted-foreground: 0 0% 45.1%;
-    --accent: 36 100% 50%; /* Bright orange for alerts */
-    --accent-foreground: 0 0% 9%;
+    --accent: 36 100% 50%; /* Bright orange for alerts - PRD */
+    --accent-foreground: 0 0% 9%; /* Dark text on accent */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 141 71% 48%; /* Metro de Medellin green */
+    --ring: 141 71% 48%; /* Metro de Medellin green for ring - PRD */
     --radius: 0.5rem;
 
-    /* Green Sidebar Theme - Light Mode */
-    --sidebar-background: 141 71% 94%;
-    --sidebar-foreground: 141 50% 20%;
-    --sidebar-primary: 141 71% 48%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 141 71% 88%;
-    --sidebar-accent-foreground: 141 50% 15%;
+    /* Sidebar Theme - Light Mode (Green) */
+    --sidebar-background: 141 71% 94%; /* Very light green */
+    --sidebar-foreground: 141 50% 20%; /* Dark green text */
+    --sidebar-primary: 141 71% 48%; /* Metro green */
+    --sidebar-primary-foreground: 0 0% 98%; /* White text */
+    --sidebar-accent: 141 71% 88%; /* Lighter green for hover */
+    --sidebar-accent-foreground: 141 50% 15%; /* Darker green text */
     --sidebar-border: 141 60% 80%;
-    --sidebar-ring: 141 71% 48%; /* Same as app ring for consistency */
+    --sidebar-ring: 141 71% 48%; 
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 141 71% 48%; /* Metro de Medellin green */
-    --primary-foreground: 0 0% 9%;
-    --secondary: 143 53% 39%; /* Darker green details */
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 36 100% 50%; /* Bright orange for alerts */
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 141 71% 48%; /* Metro de Medellin green */
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 220 10% 10%; /* Comfortable very dark cool gray */
+    --foreground: 220 10% 90%; /* Comfortable light cool gray text */
+    --card: 220 10% 15%; /* Slightly lighter card background */
+    --card-foreground: 220 10% 90%;
+    --popover: 220 10% 12%;
+    --popover-foreground: 220 10% 90%;
+    --primary: 141 60% 55%; /* Metro Green, brightened for dark mode */
+    --primary-foreground: 220 10% 5%; /* Very dark text for primary */
+    --secondary: 143 45% 45%; /* Darker, muted green for secondary */
+    --secondary-foreground: 220 10% 90%;
+    --muted: 220 10% 20%;
+    --muted-foreground: 220 10% 60%;
+    --accent: 36 100% 50%; /* Bright orange for alerts - PRD */
+    --accent-foreground: 0 0% 9%; /* Dark text for orange accent */
+    --destructive: 0 70% 50%; 
+    --destructive-foreground: 0 0% 95%;
+    --border: 220 10% 25%;
+    --input: 220 10% 22%;
+    --ring: 141 60% 55%; /* Ring color matches primary */
+    --chart-1: 141 60% 50%;
+    --chart-2: 36 90% 55%;
+    --chart-3: 220 70% 60%;
+    --chart-4: 180 50% 50%;
+    --chart-5: 300 60% 60%;
 
-    /* Green Sidebar Theme - Dark Mode */
-    --sidebar-background: 141 60% 18%;
-    --sidebar-foreground: 141 70% 85%;
-    --sidebar-primary: 141 71% 48%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 141 55% 28%;
-    --sidebar-accent-foreground: 141 70% 90%;
-    --sidebar-border: 141 50% 25%;
-    --sidebar-ring: 141 71% 48%; /* Same as app ring for consistency */
+    /* Sidebar Theme - Dark Mode (Comfortable Dark) */
+    --sidebar-background: 220 10% 8%; /* Even darker for distinct sidebar */
+    --sidebar-foreground: 220 10% 80%;
+    --sidebar-primary: 141 60% 55%; /* Matches app primary */
+    --sidebar-primary-foreground: 220 10% 5%; /* Matches app primary-foreground */
+    --sidebar-accent: 220 10% 20%; /* Hover state */
+    --sidebar-accent-foreground: 220 10% 95%;
+    --sidebar-border: 220 10% 18%;
+    --sidebar-ring: 141 60% 55%;
   }
 }
 
