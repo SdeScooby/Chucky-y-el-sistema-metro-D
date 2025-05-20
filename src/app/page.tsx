@@ -5,7 +5,7 @@ import { getMetroMedellinAlerts, Disruption } from "@/services/metro-medellin";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, AlertTriangle, Bus, Train, CableCar, Search, Moon, Sun, HelpCircle, ArrowLeft } from "lucide-react";
+import { Info, AlertTriangle, Bus, Train, CableCar, Search, Moon, Sun, HelpCircle, ArrowLeft, MapPinned } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import dynamic from 'next/dynamic';
@@ -18,7 +18,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarTrigger, SidebarFooter, SidebarHeader, SidebarMenuItem, SidebarMenu, SidebarMenuButton } from "@/components/ui/sidebar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -51,124 +50,64 @@ const metroCableKStations: Station[] = [
   { id: "ACE_K", name: "Acevedo" }, { id: "AND_K", name: "Andalucía" }, { id: "PCS_K", name: "Popular" }, { id: "SDO_K", name: "Santo Domingo Savio" },
 ];
 
+interface StationSelectionConfig {
+  selectedStations: Record<string, boolean>;
+  handleStationCheckChange: (stationId: string, checked: boolean) => void;
+}
 
-const LineNotificationPreferences = () => {
-  const [metroA, setMetroA] = useState(true);
-  const [metroB, setMetroB] = useState(true);
-  const [tranvia, setTranvia] = useState(true);
-  const [metroCable, setMetroCable] = useState(true);
-  const [busesIntegrados, setBusesIntegrados] = useState(true);
-  const [selectedLineForStations, setSelectedLineForStations] = useState<string | null>(null);
-  const [selectedStationsA, setSelectedStationsA] = useState<Record<string, boolean>>({});
+interface LineDataEntry {
+  name: string;
+  color: string;
+  stations: Station[];
+  icon: React.ElementType;
+  notificationGloballyEnabled: boolean;
+  setNotificationGloballyEnabled: (val: boolean) => void;
+  stationSelectionConfig?: StationSelectionConfig;
+}
 
-  const lineData: Record<string, { name: string; color: string; stations: Station[]; state: boolean; setStateFunction: (val: boolean) => void; icon: React.ElementType }> = {
-    'Metro A': { name: 'Metro A', color: '#A4D16A', stations: metroAStations, state: metroA, setStateFunction: setMetroA, icon: Train },
-    'Metro B': { name: 'Metro B', color: '#E57373', stations: metroBStations, state: metroB, setStateFunction: setMetroB, icon: Train },
-    'Tranvía': { name: 'Tranvía', color: '#F06292', stations: tranviaStations, state: tranvia, setStateFunction: setTranvia, icon: Train }, // Using Train icon as a placeholder
-    'Metro Cable (Línea K)': { name: 'Metro Cable (Línea K)', color: '#64B5F6', stations: metroCableKStations, state: metroCable, setStateFunction: setMetroCable, icon: CableCar },
-    'Buses Integrados': { name: 'Buses Integrados', color: '#FFB74D', stations: [], state: busesIntegrados, setStateFunction: setBusesIntegrados, icon: Bus },
-  };
 
-  const handleLineSelect = (lineKey: string) => {
-    setSelectedLineForStations(lineKey === selectedLineForStations ? null : lineKey);
-  };
+const StationSelectorCard: React.FC<{lineKey: string, lineDetails: LineDataEntry}> = ({ lineKey, lineDetails }) => {
+  if (!lineDetails.stationSelectionConfig || lineDetails.stations.length === 0) {
+    return (
+      <Card className="shadow-xl rounded-xl border-2 border-primary/10">
+        <CardHeader className="bg-primary/5 rounded-t-xl">
+          <CardTitle className="text-2xl font-semibold text-primary flex items-center">
+            <lineDetails.icon className="h-6 w-6 mr-2"/> Stations for {lineDetails.name}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <p className="text-muted-foreground">Station selection is not applicable or available for this line.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const handleStationACheckChange = (stationId: string, checked: boolean) => {
-    setSelectedStationsA(prev => ({
-      ...prev,
-      [stationId]: checked,
-    }));
-  };
+  const { selectedStations, handleStationCheckChange } = lineDetails.stationSelectionConfig;
 
   return (
-    <div className="space-y-4">
-      <Accordion type="multiple" className="w-full" defaultValue={['main-metro', 'other-lines']}>
-        <AccordionItem value="main-metro">
-          <AccordionTrigger>
-            <div className="flex items-center space-x-2">
-              <Train className="h-5 w-5" />
-              <span>Main Metro Lines</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            {Object.entries(lineData)
-              .filter(([key]) => key === 'Metro A' || key === 'Metro B')
-              .map(([key, { name, color, state, setStateFunction, icon: IconComponent }]) => (
-                <div key={key} className="flex items-center justify-between py-3 px-1 border-b last:border-b-0">
-                  <div className="flex items-center space-x-3">
-                    <span className="inline-block h-5 w-5 rounded-full" style={{ backgroundColor: color }}></span>
-                    <Button variant="link" className="p-0 h-auto text-base" onClick={() => handleLineSelect(key)}>
-                      {name}
-                    </Button>
-                  </div>
-                  <Switch checked={state} onCheckedChange={setStateFunction} />
-                </div>
-              ))}
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="other-lines">
-          <AccordionTrigger>
-            <div className="flex items-center space-x-2">
-              <CableCar className="h-5 w-5" />
-              <span>Other Lines & Services</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            {Object.entries(lineData)
-              .filter(([key]) => key !== 'Metro A' && key !== 'Metro B')
-              .map(([key, { name, color, state, setStateFunction, icon: IconComponent }]) => (
-                <div key={key} className="flex items-center justify-between py-3 px-1 border-b last:border-b-0">
-                  <div className="flex items-center space-x-3">
-                    <span className="inline-block h-5 w-5 rounded-full" style={{ backgroundColor: color }}></span>
-                    <Button variant="link" className="p-0 h-auto text-base" onClick={() => handleLineSelect(key)}>
-                      {name}
-                    </Button>
-                  </div>
-                  <Switch checked={state} onCheckedChange={setStateFunction} />
-                </div>
-              ))}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-
-      {selectedLineForStations && lineData[selectedLineForStations] && (
-        <Card className="mt-6 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Stations for {selectedLineForStations}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedLineForStations === 'Metro A' && lineData['Metro A'].stations.length > 0 ? (
-              <ScrollArea className="h-48 border rounded-md p-2">
-                <ul className="space-y-2">
-                  {lineData['Metro A'].stations.map(station => (
-                    <li key={station.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted text-sm">
-                      <Label htmlFor={`station-cb-${station.id}`} className="flex-grow cursor-pointer">{station.name}</Label>
-                      <Checkbox
-                        checked={!!selectedStationsA[station.id]}
-                        onCheckedChange={(checked) => handleStationACheckChange(station.id, !!checked)}
-                        id={`station-cb-${station.id}`}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
-            ) : lineData[selectedLineForStations].stations.length > 0 ? (
-              <ScrollArea className="h-48 border rounded-md p-2">
-                <ul className="space-y-2">
-                  {lineData[selectedLineForStations].stations.map(station => (
-                    <li key={station.id} className="p-2 rounded-md hover:bg-muted text-sm">
-                      {station.name}
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
-            ) : (
-              <p className="text-muted-foreground">Station information is not applicable or available for this selection.</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <Card className="shadow-xl rounded-xl border-2 border-primary/10">
+      <CardHeader className="bg-primary/5 rounded-t-xl">
+        <CardTitle className="text-2xl font-semibold text-primary flex items-center">
+          <lineDetails.icon className="h-6 w-6 mr-2"/> Select Stations for {lineDetails.name}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <ScrollArea className="h-96 border rounded-md p-2"> {/* Increased height */}
+          <ul className="space-y-2">
+            {lineDetails.stations.map(station => (
+              <li key={station.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted text-sm">
+                <Label htmlFor={`station-cb-${lineKey}-${station.id}`} className="flex-grow cursor-pointer">{station.name}</Label>
+                <Checkbox
+                  checked={!!selectedStations[station.id]}
+                  onCheckedChange={(checked) => handleStationCheckChange(station.id, !!checked)}
+                  id={`station-cb-${lineKey}-${station.id}`}
+                />
+              </li>
+            ))}
+          </ul>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -265,7 +204,6 @@ const RealTimeAlerts = () => {
       try {
         const metroAlerts = await getMetroMedellinAlerts();
         setAlerts(metroAlerts);
-        setCurrentTime(new Date().toLocaleTimeString());
       } catch (error) {
         console.error("Failed to fetch alerts:", error);
         setAlerts([
@@ -276,13 +214,22 @@ const RealTimeAlerts = () => {
             affectedLines: ["All"],
           },
         ]);
-        setCurrentTime(new Date().toLocaleTimeString());
       }
     };
+    
+    const updateTime = () => {
+        setCurrentTime(new Date().toLocaleTimeString());
+    }
 
     fetchAlerts();
-    const intervalId = setInterval(fetchAlerts, 60000); // Refresh every minute
-    return () => clearInterval(intervalId);
+    updateTime();
+    const alertIntervalId = setInterval(fetchAlerts, 60000); 
+    const timeIntervalId = setInterval(updateTime, 1000); 
+
+    return () => {
+        clearInterval(alertIntervalId);
+        clearInterval(timeIntervalId);
+    }
   }, []);
 
   return (
@@ -339,6 +286,48 @@ export default function Home() {
   const { theme, setTheme } = useTheme();
   const [showRoutes, setShowRoutes] = useState(false);
   const [routePage, setRoutePage] = useState(1);
+  const [activeLineKeyForStations, setActiveLineKeyForStations] = useState<string | null>(null);
+
+  // Notification preferences state
+  const [metroAGlobal, setMetroAGlobal] = useState(true);
+  const [metroBGlobal, setMetroBGlobal] = useState(true);
+  const [tranviaGlobal, setTranviaGlobal] = useState(true);
+  const [metroCableKGlobal, setMetroCableKGlobal] = useState(true);
+  const [busesIntegradosGlobal, setBusesIntegradosGlobal] = useState(true);
+
+  // Station selection states
+  const [selectedStationsA, setSelectedStationsA] = useState<Record<string, boolean>>({});
+  const [selectedStationsB, setSelectedStationsB] = useState<Record<string, boolean>>({});
+  const [selectedStationsTranvia, setSelectedStationsTranvia] = useState<Record<string, boolean>>({});
+  const [selectedStationsCableK, setSelectedStationsCableK] = useState<Record<string, boolean>>({});
+
+  const lineData: Record<string, LineDataEntry> = {
+    'Metro A': { 
+      name: 'Metro A', color: '#A4D16A', stations: metroAStations, icon: Train,
+      notificationGloballyEnabled: metroAGlobal, setNotificationGloballyEnabled: setMetroAGlobal,
+      stationSelectionConfig: { selectedStations: selectedStationsA, handleStationCheckChange: (id, val) => setSelectedStationsA(prev => ({...prev, [id]: val})) }
+    },
+    'Metro B': { 
+      name: 'Metro B', color: '#E57373', stations: metroBStations, icon: Train,
+      notificationGloballyEnabled: metroBGlobal, setNotificationGloballyEnabled: setMetroBGlobal,
+      stationSelectionConfig: { selectedStations: selectedStationsB, handleStationCheckChange: (id, val) => setSelectedStationsB(prev => ({...prev, [id]: val})) }
+    },
+    'Tranvía': { 
+      name: 'Tranvía', color: '#F06292', stations: tranviaStations, icon: Train, // Using Train icon as a placeholder
+      notificationGloballyEnabled: tranviaGlobal, setNotificationGloballyEnabled: setTranviaGlobal,
+      stationSelectionConfig: { selectedStations: selectedStationsTranvia, handleStationCheckChange: (id, val) => setSelectedStationsTranvia(prev => ({...prev, [id]: val})) }
+    },
+    'Metro Cable K': { 
+      name: 'Metro Cable (Línea K)', color: '#64B5F6', stations: metroCableKStations, icon: CableCar,
+      notificationGloballyEnabled: metroCableKGlobal, setNotificationGloballyEnabled: setMetroCableKGlobal,
+      stationSelectionConfig: { selectedStations: selectedStationsCableK, handleStationCheckChange: (id, val) => setSelectedStationsCableK(prev => ({...prev, [id]: val})) }
+    },
+    'Buses Integrados': { 
+      name: 'Buses Integrados', color: '#FFB74D', stations: [], icon: Bus,
+      notificationGloballyEnabled: busesIntegradosGlobal, setNotificationGloballyEnabled: setBusesIntegradosGlobal,
+      // No stationSelectionConfig for buses
+    },
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
@@ -357,9 +346,20 @@ export default function Home() {
   }, []);
   
 
-  const toggleRoutesView = () => {
-    setShowRoutes(prev => !prev);
+  const handleGoBackToMap = () => {
+    setActiveLineKeyForStations(null);
+    setShowRoutes(false);
   };
+
+  const handleShowBusRoutes = () => {
+    setShowRoutes(true);
+    setActiveLineKeyForStations(null);
+  }
+
+  const handleLineSelectForStations = (lineKey: string) => {
+    setActiveLineKeyForStations(lineKey);
+    setShowRoutes(false);
+  }
 
   const totalRoutePages = Math.ceil(MockBusRouteData.length / 20);
 
@@ -367,25 +367,41 @@ export default function Home() {
     <TooltipProvider>
     <SidebarProvider>
       <div className="flex h-screen bg-background font-sans antialiased">
-        <Sidebar className="border-r"> {/* Removed bg-card */}
+        <Sidebar className="border-r">
             <SidebarHeader>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={() => setShowRoutes(false)} className="mb-2">
-                            <ArrowLeft className="h-5 w-5" />
+                        <Button variant="ghost" size="icon" onClick={handleGoBackToMap} className="mb-2">
+                            <MapPinned className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="right"><p>Go Back</p></TooltipContent>
+                    <TooltipContent side="right"><p>View Full Map / Home</p></TooltipContent>
                 </Tooltip>
             </SidebarHeader>
             <SidebarContent className="flex-grow">
                 <SidebarMenu>
-                    <SidebarMenuItem>
-                         <SidebarMenuButton onClick={toggleRoutesView} tooltip="Bus Routes">
-                            <Bus className="h-5 w-5" />
-                            <span>Bus Routes</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    {Object.entries(lineData).map(([key, { name, icon: IconComponent, notificationGloballyEnabled, setNotificationGloballyEnabled, color }]) => (
+                       <SidebarMenuItem key={key}>
+                           <div className="flex items-center justify-between w-full group/menu-item">
+                               <SidebarMenuButton 
+                                   onClick={() => lineData[key].stations.length > 0 ? handleLineSelectForStations(key) : (key === 'Buses Integrados' ? handleShowBusRoutes() : null)}
+                                   tooltip={name}
+                                   className="flex-grow"
+                                   isActive={activeLineKeyForStations === key || (key === 'Buses Integrados' && showRoutes)}
+                                >
+                                   <span className="inline-block h-3 w-3 rounded-full mr-1 shrink-0" style={{ backgroundColor: color }}></span>
+                                   <IconComponent className="h-5 w-5 shrink-0" />
+                                   <span className="truncate group-data-[collapsible=icon]:hidden">{name}</span>
+                               </SidebarMenuButton>
+                               <Switch 
+                                   checked={notificationGloballyEnabled} 
+                                   onCheckedChange={setNotificationGloballyEnabled}
+                                   className="ml-2 mr-2 shrink-0 group-data-[collapsible=icon]:hidden"
+                                   aria-label={`Toggle notifications for ${name}`}
+                                />
+                           </div>
+                       </SidebarMenuItem>
+                    ))}
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
@@ -393,7 +409,7 @@ export default function Home() {
                     <SidebarMenuItem>
                          <SidebarMenuButton tooltip="Help">
                              <HelpCircle className="h-5 w-5" />
-                             <span>Help</span>
+                             <span className="group-data-[collapsible=icon]:hidden">Help</span>
                          </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
@@ -402,7 +418,7 @@ export default function Home() {
                             tooltip="Toggle Theme"
                         >
                             {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                            <span>Toggle Theme</span>
+                            <span className="group-data-[collapsible=icon]:hidden">Toggle Theme</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
@@ -461,15 +477,19 @@ export default function Home() {
                 )}
               </CardContent>
             </Card>
+          ) : activeLineKeyForStations && lineData[activeLineKeyForStations] ? (
+            <StationSelectorCard lineKey={activeLineKeyForStations} lineDetails={lineData[activeLineKeyForStations]} />
           ) : (
-            <Card className="shadow-xl rounded-xl border-2 border-primary/10">
+            <Card className="shadow-xl rounded-xl border-2 border-primary/10" style={{minHeight: 'calc(100vh - 22rem)'}}>
               <CardHeader className="bg-primary/5 rounded-t-xl">
                 <CardTitle className="text-2xl font-semibold text-primary flex items-center">
-                 <Train className="h-6 w-6 mr-2"/> Notification Preferences
+                 <MapPinned className="h-6 w-6 mr-2"/> Metro System Map
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <LineNotificationPreferences />
+              <CardContent className="p-6 flex-grow flex">
+                <div className="w-full h-[calc(100vh-28rem)] min-h-[400px] relative rounded-lg overflow-hidden shadow-md border border-gray-300">
+                    <DynamicMap />
+                </div>
               </CardContent>
             </Card>
           )}
@@ -479,3 +499,4 @@ export default function Home() {
     </TooltipProvider>
   );
 }
+
