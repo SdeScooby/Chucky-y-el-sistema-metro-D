@@ -50,6 +50,27 @@ const metroCableKStations: Station[] = [
   { id: "ACE_K", name: "Acevedo" }, { id: "AND_K", name: "Andalucía" }, { id: "PCS_K", name: "Popular" }, { id: "SDO_K", name: "Santo Domingo Savio" },
 ];
 
+const metroCableHStations: Station[] = [
+  { id: "ORI_H", name: "Oriente" }, { id: "LST_H", name: "Las Torres" }, { id: "VSI_H", name: "Villa Sierra" },
+];
+
+const metroCableJStations: Station[] = [
+  { id: "SJA_J", name: "San Javier" }, { id: "J23_J", name: "Juan XXIII" }, { id: "VAL_J", name: "Vallejuelos" }, { id: "LAU_J", name: "La Aurora" },
+];
+
+const metroCableLStations: Station[] = [ // Tourist line
+  { id: "SDO_L", name: "Santo Domingo Savio" }, { id: "ARV_L", name: "Arví" },
+];
+
+const metroCableMStations: Station[] = [
+  { id: "MIR_M", name: "Miraflores" }, { id: "ELP_M", name: "El Pinal" }, { id: "TRN_M", name: "Trece de Noviembre" },
+];
+
+const metroCablePStations: Station[] = [
+  { id: "ACE_P", name: "Acevedo" }, { id: "SEN_P", name: "SENA" }, { id: "DOC_P", name: "Doce de Octubre" }, { id: "ELP_P", name: "El Progreso" },
+];
+
+
 interface StationSelectionConfig {
   selectedStations: Record<string, boolean>;
   handleStationCheckChange: (stationId: string, checked: boolean) => void;
@@ -293,6 +314,11 @@ export default function Home() {
   const [metroBGlobal, setMetroBGlobal] = useState(true);
   const [tranviaGlobal, setTranviaGlobal] = useState(true);
   const [metroCableKGlobal, setMetroCableKGlobal] = useState(true);
+  const [metroCableHGlobal, setMetroCableHGlobal] = useState(true);
+  const [metroCableJGlobal, setMetroCableJGlobal] = useState(true);
+  const [metroCableLGlobal, setMetroCableLGlobal] = useState(true);
+  const [metroCableMGlobal, setMetroCableMGlobal] = useState(true);
+  const [metroCablePGlobal, setMetroCablePGlobal] = useState(true);
   const [busesIntegradosGlobal, setBusesIntegradosGlobal] = useState(true);
 
   // Station selection states
@@ -300,6 +326,12 @@ export default function Home() {
   const [selectedStationsB, setSelectedStationsB] = useState<Record<string, boolean>>({});
   const [selectedStationsTranvia, setSelectedStationsTranvia] = useState<Record<string, boolean>>({});
   const [selectedStationsCableK, setSelectedStationsCableK] = useState<Record<string, boolean>>({});
+  const [selectedStationsCableH, setSelectedStationsCableH] = useState<Record<string, boolean>>({});
+  const [selectedStationsCableJ, setSelectedStationsCableJ] = useState<Record<string, boolean>>({});
+  const [selectedStationsCableL, setSelectedStationsCableL] = useState<Record<string, boolean>>({});
+  const [selectedStationsCableM, setSelectedStationsCableM] = useState<Record<string, boolean>>({});
+  const [selectedStationsCableP, setSelectedStationsCableP] = useState<Record<string, boolean>>({});
+
 
   const lineData: Record<string, LineDataEntry> = {
     'Metro A': { 
@@ -312,8 +344,8 @@ export default function Home() {
       notificationGloballyEnabled: metroBGlobal, setNotificationGloballyEnabled: setMetroBGlobal,
       stationSelectionConfig: { selectedStations: selectedStationsB, handleStationCheckChange: (id, val) => setSelectedStationsB(prev => ({...prev, [id]: val})) }
     },
-    'Tranvía': { 
-      name: 'Tranvía', color: '#F06292', stations: tranviaStations, icon: Train, // Using Train icon as a placeholder
+    'Tranvía T-A': { 
+      name: 'Tranvía (Línea T-A)', color: '#F06292', stations: tranviaStations, icon: Train, // Using Train icon as placeholder for Tram
       notificationGloballyEnabled: tranviaGlobal, setNotificationGloballyEnabled: setTranviaGlobal,
       stationSelectionConfig: { selectedStations: selectedStationsTranvia, handleStationCheckChange: (id, val) => setSelectedStationsTranvia(prev => ({...prev, [id]: val})) }
     },
@@ -321,6 +353,31 @@ export default function Home() {
       name: 'Metro Cable (Línea K)', color: '#64B5F6', stations: metroCableKStations, icon: CableCar,
       notificationGloballyEnabled: metroCableKGlobal, setNotificationGloballyEnabled: setMetroCableKGlobal,
       stationSelectionConfig: { selectedStations: selectedStationsCableK, handleStationCheckChange: (id, val) => setSelectedStationsCableK(prev => ({...prev, [id]: val})) }
+    },
+    'Metro Cable H': { 
+      name: 'Metro Cable (Línea H)', color: '#BA68C8', stations: metroCableHStations, icon: CableCar,
+      notificationGloballyEnabled: metroCableHGlobal, setNotificationGloballyEnabled: setMetroCableHGlobal,
+      stationSelectionConfig: { selectedStations: selectedStationsCableH, handleStationCheckChange: (id, val) => setSelectedStationsCableH(prev => ({...prev, [id]: val})) }
+    },
+    'Metro Cable J': { 
+      name: 'Metro Cable (Línea J)', color: '#4DB6AC', stations: metroCableJStations, icon: CableCar,
+      notificationGloballyEnabled: metroCableJGlobal, setNotificationGloballyEnabled: setMetroCableJGlobal,
+      stationSelectionConfig: { selectedStations: selectedStationsCableJ, handleStationCheckChange: (id, val) => setSelectedStationsCableJ(prev => ({...prev, [id]: val})) }
+    },
+    'Metro Cable L': { 
+      name: 'Metro Cable (Línea L - Arví)', color: '#A1887F', stations: metroCableLStations, icon: CableCar,
+      notificationGloballyEnabled: metroCableLGlobal, setNotificationGloballyEnabled: setMetroCableLGlobal,
+      stationSelectionConfig: { selectedStations: selectedStationsCableL, handleStationCheckChange: (id, val) => setSelectedStationsCableL(prev => ({...prev, [id]: val})) }
+    },
+    'Metro Cable M': { 
+      name: 'Metro Cable (Línea M)', color: '#7986CB', stations: metroCableMStations, icon: CableCar,
+      notificationGloballyEnabled: metroCableMGlobal, setNotificationGloballyEnabled: setMetroCableMGlobal,
+      stationSelectionConfig: { selectedStations: selectedStationsCableM, handleStationCheckChange: (id, val) => setSelectedStationsCableM(prev => ({...prev, [id]: val})) }
+    },
+    'Metro Cable P': { 
+      name: 'Metro Cable (Línea P)', color: '#4DD0E1', stations: metroCablePStations, icon: CableCar,
+      notificationGloballyEnabled: metroCablePGlobal, setNotificationGloballyEnabled: setMetroCablePGlobal,
+      stationSelectionConfig: { selectedStations: selectedStationsCableP, handleStationCheckChange: (id, val) => setSelectedStationsCableP(prev => ({...prev, [id]: val})) }
     },
     'Buses Integrados': { 
       name: 'Buses Integrados', color: '#FFB74D', stations: [], icon: Bus,
@@ -499,4 +556,3 @@ export default function Home() {
     </TooltipProvider>
   );
 }
-
