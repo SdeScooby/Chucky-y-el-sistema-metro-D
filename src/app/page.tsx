@@ -5,7 +5,7 @@ import { getMetroMedellinAlerts, Disruption } from "@/services/metro-medellin";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, AlertTriangle, Bus, Train, CableCar, Search, Moon, Sun, HelpCircle, ArrowLeft, MapPinned } from "lucide-react";
+import { Info, AlertTriangle, Bus, Train, CableCar, Search, Moon, Sun, HelpCircle, MapPinned } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import dynamic from 'next/dynamic';
